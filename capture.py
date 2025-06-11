@@ -1,14 +1,22 @@
 import cv2
 import os
 import time
-from datetime import datetime
-
-import os
-import time
 import platform
 import numpy as np
 from datetime import datetime
-import cv2
+
+# Global camera object (for Linux / picamera2)
+picam2 = None
+
+def init_camera():
+    global picam2
+    if platform.system() == "Linux":
+        from picamera2 import Picamera2
+        if picam2 is None:
+            picam2 = Picamera2()
+            picam2.configure(picam2.create_still_configuration())
+            picam2.start()
+            time.sleep(1)  # let camera warm up
 
 def get_camera_frame():
     system = platform.system()
@@ -26,16 +34,9 @@ def get_camera_frame():
         return frame
 
     elif system == "Linux":
-        try:
-            from picamera2 import Picamera2
-            picam2 = Picamera2()
-            picam2.start()
-            time.sleep(1)
-            frame = picam2.capture_array()
-            picam2.stop()
-            return frame
-        except ImportError:
-            raise RuntimeError("picamera2 not installed or usable.")
+        if picam2 is None:
+            raise RuntimeError("Camera not initialized. Call init_camera() first.")
+        return picam2.capture_array()
 
     else:
         raise RuntimeError(f"Unsupported platform: {system}")
@@ -45,6 +46,7 @@ def detect_motion_and_capture(threshold=500000, delay=0.2):
     os.makedirs("images", exist_ok=True)
 
     try:
+        init_camera()
         prev = get_camera_frame()
         prev_gray = cv2.cvtColor(prev, cv2.COLOR_BGR2GRAY)
         time.sleep(delay)

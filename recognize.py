@@ -1,12 +1,24 @@
 import requests
 import os
 from dotenv import load_dotenv
+import cv2
 
 load_dotenv()
 
 API_KEY = os.getenv("PLATE_RECOGNIZER_API_KEY")
 
 def recognize_plate(image_path: str):
+    # Resize image to prevent API 413 error
+    image = cv2.imread(image_path)
+    height, width = image.shape[:2]
+    max_width = 800
+    if width > max_width:
+        scale = max_width / width
+        new_height = int(height * scale)
+        image = cv2.resize(image, (max_width, new_height))
+        cv2.imwrite(image_path, image)
+
+    # Upload resized image
     with open(image_path, "rb") as image_file:
         response = requests.post(
             "https://api.platerecognizer.com/v1/plate-reader/",
@@ -16,7 +28,6 @@ def recognize_plate(image_path: str):
 
     if response.status_code not in [200, 201]:
         raise Exception(f"Plate recognition failed: {response.status_code} {response.text}")
-
 
     data = response.json()
     results = data.get("results", [])
