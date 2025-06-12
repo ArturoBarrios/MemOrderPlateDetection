@@ -4,7 +4,8 @@ import time
 import requests
 import os
 
-AUDIO_URL = os.environ.get("AUDIO_URL", "localhost:6000")
+AUDIO_URL = os.environ.get("AUDIO_URL", "http://127.0.0.1:8000").rstrip("/")
+print(f"[DEBUG] AUDIO_URL is: '{AUDIO_URL}'")
 
 def main():
     print("🚘 Drive-thru plate reader with motion detection ready...")
@@ -20,14 +21,15 @@ def main():
             print(f"[SUCCESS] Plate Detected: {result['plate']} (score: {result['score']})")
             print(f"Bounding box: {result['box']}")
             try:
-                url = f"http://{AUDIO_URL}/trigger-audio"
+                url = f"{AUDIO_URL}/trigger-audio"
+
                 response = requests.post(url, json=result)
                 print(f"[AUDIO SERVER] Status: {response.status_code}")
                 print(f"[AUDIO SERVER] Response: {response.text}")
             except requests.exceptions.RequestException as e:
                 print(f"[ERROR] Could not reach audio server: {e}")
             
-        else:
+        else:            
             print("[FAILURE] No plate detected.")
 
         time.sleep(2)  # short pause to avoid rapid repeat triggers

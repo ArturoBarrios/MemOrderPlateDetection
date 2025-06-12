@@ -34,6 +34,7 @@ def recognize_plate(image_path: str):
 
     if not results:
         print("No plate detected.")
+        os.remove(image_path)
         return None
 
     plate_data = results[0]
