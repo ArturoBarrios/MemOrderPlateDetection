@@ -7,6 +7,30 @@ import os
 AUDIO_URL = os.environ.get("AUDIO_URL", "http://127.0.0.1:8000").rstrip("/")
 print(f"[DEBUG] AUDIO_URL is: '{AUDIO_URL}'")
 
+
+
+def send_plate_to_backend(plate: str):
+    BACKEND_URL = os.environ.get("BACKEND_GRAPHQL_URL", "http://127.0.0.1:4000/graphql")
+
+    query = """
+    query SendPlate($plate: String!) {
+        plateRecorded(plateId: $plate)
+    }
+    """
+
+    payload = {
+        "query": query,
+        "variables": {"plate": plate}
+    }
+
+    try:
+        response = requests.post(BACKEND_URL, json=payload)
+        response.raise_for_status()
+        print(f"[BACKEND] Sent plate '{plate}' successfully.")
+        print(f"[BACKEND] Response: {response.text}")
+    except requests.exceptions.RequestException as e:
+        print(f"[ERROR] Could not reach backend: {e}")
+
 def main():
     print("🚘 Drive-thru plate reader with motion detection ready...")
 
@@ -28,6 +52,10 @@ def main():
                 print(f"[AUDIO SERVER] Response: {response.text}")
             except requests.exceptions.RequestException as e:
                 print(f"[ERROR] Could not reach audio server: {e}")
+            try:
+                send_plate_to_backend(result["plate"])
+            except Exception as e:
+                print(f"[ERROR] Failed to send plate to backend: {e}")
             
         else:            
             print("[FAILURE] No plate detected.")
