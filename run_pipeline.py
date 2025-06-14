@@ -82,7 +82,7 @@ def main():
         else:            
             print("[FAILURE] No plate detected.")
 
-        time.sleep(2)  # short pause to avoid rapid repeat triggers
+        time.sleep(20)  # short pause to avoid rapid repeat triggers
 
 if __name__ == "__main__":
     main()
