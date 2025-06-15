@@ -4,6 +4,8 @@ import time
 import requests
 import os
 import json
+import random
+import string
 
 AUDIO_URL = os.environ.get("AUDIO_URL", "http://127.0.0.1:8000").rstrip("/")
 print(f"[DEBUG] AUDIO_URL is: '{AUDIO_URL}'")
@@ -65,8 +67,8 @@ def main():
                 print("url: ", url)
                 print("environment: ",  os.environ.get("ENVIRONMENT"))                
                 if( os.environ.get("ENVIRONMENT")=='DEVELOPMENT'):
-                    plate = 'ABC123'
-                    image_path = "images/test-image.jpg"
+                    plate = generate_random_plate()
+                    print(f"Generated plate: {plate}")                    
                 else: 
                     plate = result['plate']                    
                 response = requests.post(url, json={"plate": plate})
@@ -76,13 +78,20 @@ def main():
                 print(f"[ERROR] Could not reach audio server: {e}")
             try:
                 send_plate_to_backend(plate, image_path)
+                os.remove(image_path)  # Clean up the image file after sending
             except Exception as e:
                 print(f"[ERROR] Failed to send plate to backend: {e}")
             
         else:            
             print("[FAILURE] No plate detected.")
 
-        time.sleep(20)  # short pause to avoid rapid repeat triggers
+        time.sleep(10)  # short pause to avoid rapid repeat triggers
+        
+        
+def generate_random_plate():
+    letters = ''.join(random.choices(string.ascii_uppercase, k=3))
+    digits = ''.join(random.choices(string.digits, k=3))
+    return f"{letters}{digits}"
 
 if __name__ == "__main__":
     main()
